@@ -2,10 +2,20 @@ clear;
 clc;
 close all;
 
-f = @ (x) (x(1)-10)^4+(x(2)-40)^10;
+addpath(genpath('../..'))
+
+f = @ (x) (x(1)-10)^4+(x(2)-40)^4;
 x0 = [1;1];
 
-fmingrad(f,x0)
+%fmingrad(f,x0)
+
+opts.k_max = 300;
+fminbb(f,x0,opts)
+
+opts.termination = 'rel';
+opts.lambda = 0.6;
+fminbb(f,x0,opts)
+
 
 %opts.step_factor = 'decay';
 %opts.alpha = 1;

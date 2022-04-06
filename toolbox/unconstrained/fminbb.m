@@ -1,12 +1,12 @@
 %==========================================================================
 %
-% fmingrad  Finds the local minimizer and minimum of an objective 
-% function using the gradient descent method.
+% fminbb  Finds the local minimizer and minimum of an objective 
+% function using the Barzilai-Borwein step factor.
 %
-%   x_min = fmingrad(f,x0)
-%   x_min = fmingrad(f,x0,opts)
-%   [x_min,f_min] = fmingrad(__)
-%   [x_min,f_min,x_all,f_all] = fmingrad(__)
+%   x_min = fminbb(f,x0)
+%   x_min = fminbb(f,x0,opts)
+%   [x_min,f_min] = fminbb(__)
+%   [x_min,f_min,x_all,f_all] = fminbb(__)
 %
 % Author: Tamas Kis
 % Last Update: 2022-04-05
@@ -25,9 +25,6 @@
 %   f       - (1×1 function_handle) objective function, f(x) (f : ℝⁿ → ℝ)
 %   x0      - (n×1 double) initial guess for local minimizer
 %   opts    - (1×1 struct) (OPTIONAL) solver options
-%       • alpha         - (1×1 double) learning rate (i.e. constant step
-%                         factor)
-%       • gamma         - (1×1 double) step factor decay rate
 %       • gradient      - (function_handle) gradient of the objective
 %                         function
 %       • k_max         - (1×1 double) maximimum number of iterations
@@ -36,13 +33,6 @@
 %                         returned if set to "true"; otherwise, a faster 
 %                         algorithm is used to return only the converged 
 %                         local minimizer/minimum
-%       • step_factor   - (char) specifies type of step factor to use: 
-%                         'line search', 'decay', or 'constant' (defaults
-%                         to 'line search')
-%                           --> if step_factor = 'constant', then
-%                               opts.alpha must be specified
-%                           --> if step_factor = 'decay', then
-%                               opts.alpha AND opts.gamma must be specified
 %       • termination   - (char) termination condition ('abs' or 'rel')
 %       • TOL           - (1×1 double) tolerance (defaults to 1e-12)
 %       • warnings      - (logical) true if any warnings should be
@@ -62,7 +52,7 @@
 %   --> k = number of iterations it took for the solution to converge
 %
 %==========================================================================
-function [x_min,f_min,x_all,f_all] = fmingrad(f,x0,opts)
+function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
     
     % ----------------------------------
     % Sets (or defaults) solver options.
@@ -83,18 +73,18 @@ function [x_min,f_min,x_all,f_all] = fmingrad(f,x0,opts)
         k_max = opts.k_max;
     end
     
+    % sets parameter that scales the step factor
+    if (nargin < 3) || isempty(opts) || ~isfield(opts,'lambda')
+        lambda = 1;
+    else
+        lambda = opts.lambda;
+    end
+    
     % determines if all intermediate estimates should be returned
     if (nargin < 3) || isempty(opts) || ~isfield(opts,'return_all')
         return_all = false;
     else
         return_all = opts.return_all;
-    end
-    
-    % determines which step factor to use
-    if (nargin < 3) || isempty(opts) || ~isfield(opts,'step_factor')
-        step_factor = 'line search';
-    else
-        step_factor = opts.step_factor;
     end
 
     % sets termination condition (defaults to 'abs')
@@ -117,35 +107,10 @@ function [x_min,f_min,x_all,f_all] = fmingrad(f,x0,opts)
     else
         warnings = opts.warnings;
     end
-    
-    % --------------------------------------------------
-    % Additional parameters for gradient descent method.
-    % --------------------------------------------------
 
-    % logicals controlling which type of step factor to use
-    decay_step_factor = false;
-    optim_step_factor = false;
-    if strcmpi(step_factor,'decay'), decay_step_factor = true; end
-    if strcmpi(step_factor,'line search'), optim_step_factor = true; end
-    
-    % initial step factor
-    if ~optim_step_factor
-        alpha = opts.alpha;
-    end
-
-    % step factor decay rate
-    if decay_step_factor
-        gamma = opts.gamma;
-    end
-
-    % line search options
-    if optim_step_factor
-        opts_ls.n = 3;
-    end
-
-    % ------------------------
-    % Gradient descent method.
-    % ------------------------
+    % -----------------------------------------------------------
+    % Gradient descent method using Barzilai-Borwein step factor.
+    % -----------------------------------------------------------
 
     % preallocates arrays
     if return_all
@@ -153,10 +118,14 @@ function [x_min,f_min,x_all,f_all] = fmingrad(f,x0,opts)
         f_all = zeros(1,k_max+1);
     end
 
-    % sets initial guess for local minimizer
-    x_curr = x0;
+    % sets 1st and 2nd estimates for local minimizer
+    x_prev = x0;
+    x_curr = x0+0.001;
     
-    % objective function evaluation at initial guess
+    % gradient evaluation at 1st iteration
+    g_prev = f(x_prev);
+    
+    % objective function evaluation at 2nd iteration
     f_curr = f(x_curr);
 
     % gradient descent method
@@ -174,12 +143,12 @@ function [x_min,f_min,x_all,f_all] = fmingrad(f,x0,opts)
         % descent direction
         d = -g_curr/norm(g_curr);
 
-        % step factor
-        if decay_step_factor
-            alpha = alpha*gamma;
-        elseif optim_step_factor
-            alpha = line_search(f,x_curr,d,opts_ls);
-        end
+        % Barzilai-Borwein step factor
+        alpha = norm(g_curr)*(((x_curr-x_prev).'*(g_curr-g_prev))/...
+            norm(g_curr-g_prev)^2);
+
+        % scaling Barzilai-Borwein step factor
+        alpha = lambda*alpha;
 
         % next estimate of local minimizer and minimum
         x_next = x_curr+alpha*d;
@@ -191,6 +160,8 @@ function [x_min,f_min,x_all,f_all] = fmingrad(f,x0,opts)
         end
 
         % stores results/evaluations for next iteration
+        g_prev = g_curr;
+        x_prev= x_curr;
         x_curr = x_next;
         f_curr = f_next;
         
