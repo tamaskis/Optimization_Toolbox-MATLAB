@@ -37,7 +37,7 @@ function alpha = line_search(f,x,d,opts)
 
     % interval containing local minimizer of g(α)
     [a,b] = bracket_minimum(g);
-
+    
     % initial guess for local minimizer of g(α)
     alpha0 = (a+b)/2;
     
@@ -47,5 +47,5 @@ function alpha = line_search(f,x,d,opts)
     else
         alpha = fminuni(g,alpha0);
     end
-    
+
 end
