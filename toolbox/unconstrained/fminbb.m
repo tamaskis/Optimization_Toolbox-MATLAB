@@ -26,9 +26,11 @@
 %   x0      - (n×1 double) initial guess for local minimizer
 %   opts    - (1×1 struct) (OPTIONAL) solver options
 %       • gradient      - (function_handle) gradient of the objective
-%                         function
+%                         function, g(x) = ∇f(x) (g : ℝⁿ → ℝⁿ)
 %       • k_max         - (1×1 double) maximimum number of iterations
 %                         (defaults to 100)
+%       • lambda        - (1×1 double) parameter for scaling 
+%                         Barzilai-Borwein step factor
 %       • return_all    - (logical) all intermediate root estimates are
 %                         returned if set to "true"; otherwise, a faster 
 %                         algorithm is used to return only the converged 
@@ -43,8 +45,8 @@
 % -------
 %   x_min   - (n×1 double) local minimizer of f(x)
 %   f_min   - (1×1 double) local minimum of f(x)
-%   x_all   - (n×k double) all estimates of local minimizer of f(x)
-%   f_all   - (1×k double) all estimates of local minimum of f(x)
+%   x_all   - (n×k double) all intermediate estimates of local minimizer
+%   f_all   - (1×k double) all intermediate estimates of local minimum
 %
 % -----
 % NOTE:
@@ -122,13 +124,20 @@ function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
     x_prev = x0;
     x_curr = x0+0.001;
     
-    % gradient evaluation at 1st iteration
-    g_prev = f(x_prev);
+    % objective function and gradient evaluations at 1st iteration
+    f_prev = f(x_prev);
+    g_prev = g(x_prev);
     
     % objective function evaluation at 2nd iteration
     f_curr = f(x_curr);
 
-    % gradient descent method
+    % stores first iteration
+    if return_all
+        x_all(:,1) = x0;
+        f_all(1) = f_prev;
+    end
+
+    % gradient descent method using Barzilai-Borwein step factor
     for k = 1:k_max
         
         % stores results in arrays
@@ -139,21 +148,21 @@ function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
 
         % gradient at current iteration
         g_curr = g(x_curr);
-
+        
         % descent direction
         d = -g_curr/norm(g_curr);
-
+        
         % Barzilai-Borwein step factor
         alpha = norm(g_curr)*(((x_curr-x_prev).'*(g_curr-g_prev))/...
             norm(g_curr-g_prev)^2);
-
+        
         % scaling Barzilai-Borwein step factor
         alpha = lambda*alpha;
 
         % next estimate of local minimizer and minimum
         x_next = x_curr+alpha*d;
         f_next = f(x_next);
-
+        x_next
         % terminates solver if termination condition satisfied
         if terminate_solver(f_curr,f_next,TOL,condition)
             break;
