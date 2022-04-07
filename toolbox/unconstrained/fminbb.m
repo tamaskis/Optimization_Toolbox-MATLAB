@@ -6,13 +6,15 @@
 %   x_min = fminbb(f,x0)
 %   x_min = fminbb(f,x0,opts)
 %   [x_min,f_min] = fminbb(__)
-%   [x_min,f_min,x_all,f_all] = fminbb(__)
+%   [x_min,f_min,k] = fminbb(__)
+%   [x_min,f_min,k,x_all,f_all] = fminbb(__)
 %
 % Author: Tamas Kis
-% Last Update: 2022-04-05
+% Last Update: 2022-04-06
 %
 % REFERENCES:
 %   [1] Kochenderfer and Wheeler, "Algorithms for Optimization" (pp. 69-71)
+%   [2] https://en.wikipedia.org/wiki/Gradient_descent
 %
 % This function requires the Numerical Differentiation Toolbox:
 % https://www.mathworks.com/matlabcentral/fileexchange/97267-numerical-differentiation-toolbox
@@ -28,7 +30,7 @@
 %       • gradient      - (function_handle) gradient of the objective
 %                         function, g(x) = ∇f(x) (g : ℝⁿ → ℝⁿ)
 %       • k_max         - (1×1 double) maximimum number of iterations
-%                         (defaults to 100)
+%                         (defaults to 200)
 %       • lambda        - (1×1 double) parameter for scaling 
 %                         Barzilai-Borwein step factor
 %       • return_all    - (logical) all intermediate root estimates are
@@ -37,24 +39,18 @@
 %                         local minimizer/minimum
 %       • termination   - (char) termination condition ('abs' or 'rel')
 %       • TOL           - (1×1 double) tolerance (defaults to 1e-12)
-%       • warnings      - (logical) true if any warnings should be
-%                         displayed, false if not (defaults to true)
 %
 % -------
 % OUTPUT:
 % -------
 %   x_min   - (n×1 double) local minimizer of f(x)
 %   f_min   - (1×1 double) local minimum of f(x)
+%   k       - (1×1 double) number of solver iterations
 %   x_all   - (n×k double) all intermediate estimates of local minimizer
 %   f_all   - (1×k double) all intermediate estimates of local minimum
 %
-% -----
-% NOTE:
-% -----
-%   --> k = number of iterations it took for the solution to converge
-%
 %==========================================================================
-function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
+function [x_min,f_min,k,x_all,f_all] = fminbb(f,x0,opts)
     
     % ----------------------------------
     % Sets (or defaults) solver options.
@@ -68,9 +64,9 @@ function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
         g = @(x) opts.gradient(x);
     end
     
-    % sets maximum number of iterations (defaults to 100)
+    % sets maximum number of iterations (defaults to 200)
     if (nargin < 3) || isempty(opts) || ~isfield(opts,'k_max')
-        k_max = 100;
+        k_max = 200;
     else
         k_max = opts.k_max;
     end
@@ -101,13 +97,6 @@ function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
         TOL = 1e-12;
     else
         TOL = opts.TOL;
-    end
-    
-    % determines if warnings should be displayed (defaults to true)
-    if (nargin < 3) || isempty(opts) || ~isfield(opts,'warnings')
-        warnings = true;
-    else
-        warnings = opts.warnings;
     end
 
     % -----------------------------------------------------------
@@ -152,6 +141,10 @@ function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
         % descent direction
         d = -g_curr/norm(g_curr);
         
+        % terminate solver if no difference in gradients (results in NaN
+        % step factor)
+        if isnan(1/norm(g_curr-g_prev)), break; end
+
         % Barzilai-Borwein step factor
         alpha = norm(g_curr)*(((x_curr-x_prev).'*(g_curr-g_prev))/...
             norm(g_curr-g_prev)^2);
@@ -162,15 +155,15 @@ function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
         % next estimate of local minimizer and minimum
         x_next = x_curr+alpha*d;
         f_next = f(x_next);
-        x_next
+        
         % terminates solver if termination condition satisfied
         if terminate_solver(f_curr,f_next,TOL,condition)
             break;
         end
 
-        % stores results/evaluations for next iteration
+        % stores variables for next iteration
         g_prev = g_curr;
-        x_prev= x_curr;
+        x_prev = x_curr;
         x_curr = x_next;
         f_curr = f_next;
         
@@ -184,15 +177,6 @@ function [x_min,f_min,x_all,f_all] = fminbb(f,x0,opts)
     if return_all
         x_all(:,k+1) = x_min; x_all = x_all(:,1:(k+1));
         f_all(k+1) = f_min; f_all = f_all(:,1:(k+1));
-    end
-    
-    % ---------------------------------------------------------
-    % Displays warning if maximum number of iterations reached.
-    % ---------------------------------------------------------
-
-    if (k == k_max) && warnings
-        warning(strcat('Maximum number of iterations (',num2str(k_max),...
-            ') reached.'));
     end
       
 end

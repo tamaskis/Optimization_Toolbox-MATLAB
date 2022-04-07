@@ -8,7 +8,7 @@
 %   [x_min,f_min] = fminuni(__)
 %
 % Author: Tamas Kis
-% Last Update: 2022-04-05
+% Last Update: 2022-04-06
 %
 %--------------------------------------------------------------------------
 %
@@ -23,7 +23,7 @@
 %                  search)
 %                   --> defaults to 'golden'
 %       • n      - (1×1 double) maximimum number of function evaluations 
-%                  (defaults to 100)
+%                  (defaults to 200)
 %       • TOL    - (1×1 double) tolerance (TODO) (defaults to 1e-12)
 %
 % -------
@@ -46,9 +46,9 @@ function [x_min,f_min] = fminuni(f,x0,opts)
         method = opts.method;
     end
     
-    % sets maximum number of function evaluations defaults to 100)
+    % sets maximum number of function evaluations defaults to 200)
     if (nargin < 3) || isempty(opts) || ~isfield(opts,'n')
-        n = 100;
+        n = 200;
     else
         n = opts.n;
     end
