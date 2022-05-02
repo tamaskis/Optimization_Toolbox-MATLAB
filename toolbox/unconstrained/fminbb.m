@@ -1,7 +1,8 @@
 %==========================================================================
 %
 % fminbb  Finds the local minimizer and minimum of an objective 
-% function using the Barzilai-Borwein step factor.
+% function using the gradient descent method with the Barzilai-Borwein step
+% factor.
 %
 %   x_min = fminbb(f,x0)
 %   x_min = fminbb(f,x0,opts)
@@ -10,7 +11,7 @@
 %   [x_min,f_min,k,x_all,f_all] = fminbb(__)
 %
 % Author: Tamas Kis
-% Last Update: 2022-04-06
+% Last Update: 2022-04-07
 %
 % REFERENCES:
 %   [1] Kochenderfer and Wheeler, "Algorithms for Optimization" (pp. 69-71)
@@ -33,10 +34,8 @@
 %                         (defaults to 200)
 %       • lambda        - (1×1 double) parameter for scaling 
 %                         Barzilai-Borwein step factor
-%       • return_all    - (logical) all intermediate root estimates are
-%                         returned if set to "true"; otherwise, a faster 
-%                         algorithm is used to return only the converged 
-%                         local minimizer/minimum
+%       • return_all    - (1×1 logical) all intermediate estimates are 
+%                         returned if set to "true"
 %       • termination   - (char) termination condition ('abs' or 'rel')
 %       • TOL           - (1×1 double) tolerance (defaults to 1e-12)
 %
@@ -146,7 +145,7 @@ function [x_min,f_min,k,x_all,f_all] = fminbb(f,x0,opts)
         if isnan(1/norm(g_curr-g_prev)), break; end
 
         % Barzilai-Borwein step factor
-        alpha = norm(g_curr)*(((x_curr-x_prev).'*(g_curr-g_prev))/...
+        alpha = norm(g_curr)*(abs((x_curr-x_prev).'*(g_curr-g_prev))/...
             norm(g_curr-g_prev)^2);
         
         % scaling Barzilai-Borwein step factor

@@ -24,7 +24,7 @@
 %                   --> defaults to 'golden'
 %       • n      - (1×1 double) maximimum number of function evaluations 
 %                  (defaults to 200)
-%       • TOL    - (1×1 double) tolerance (TODO) (defaults to 1e-12)
+%       • TOL    - (1×1 double) tolerance (defaults to 10⁻¹⁰)
 %
 % -------
 % OUTPUT:
@@ -46,12 +46,15 @@ function [x_min,f_min] = fminuni(f,x0,opts)
         method = opts.method;
     end
     
-    % sets maximum number of function evaluations defaults to 200)
+    % sets maximum number of function evaluations (defaults to 200)
     if (nargin < 3) || isempty(opts) || ~isfield(opts,'n')
         n = 200;
     else
         n = opts.n;
     end
+
+    % determines if tolerance is input
+    TOL_input = (nargin == 3) && ~isempty(opts) && isfield(opts,'TOL');
     
     % -------------
     % Optimization.
@@ -62,7 +65,11 @@ function [x_min,f_min] = fminuni(f,x0,opts)
     
     % finds a (very small) interval containing local minimizer
     if strcmpi(method,'golden')
-        [a,b] = golden_section_search(f,a0,b0,n);
+        if TOL_input
+            [a,b] = golden_section_search(f,a0,b0,n,TOL);
+        else
+            [a,b] = golden_section_search(f,a0,b0,n);
+        end
     end
     
     % local minimizer and minimum

@@ -59,7 +59,7 @@ function [a,b] = golden_section_search(f,a0,b0,n,TOL)
     if (nargin < 4) || isempty(n)
         n = 100;
     end
-
+    
     % defaults according to tolerance specification if TOL is input
     if (nargin == 5)
         n = ceil((b-a)/(TOL*log(phi)));
