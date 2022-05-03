@@ -1,17 +1,17 @@
 %==========================================================================
 %
-% fminbb  Finds the local minimizer and minimum of an objective 
-% function using the gradient descent method with the Barzilai-Borwein step
-% factor.
+% minimize_barzilai_borwein  Finds the local minimizer and minimum of an 
+% objective function using the gradient descent method with the 
+% Barzilai-Borwein step factor.
 %
-%   x_min = fminbb(f,x0)
-%   x_min = fminbb(f,x0,opts)
-%   [x_min,f_min] = fminbb(__)
-%   [x_min,f_min,k] = fminbb(__)
-%   [x_min,f_min,k,x_all,f_all] = fminbb(__)
+%   x_min = minimize_barzilai_borwein(f,x0)
+%   x_min = minimize_barzilai_borwein(f,x0,opts)
+%   [x_min,f_min] = minimize_barzilai_borwein(__)
+%   [x_min,f_min,k] = minimize_barzilai_borwein(__)
+%   [x_min,f_min,k,x_all,f_all] = minimize_barzilai_borwein(__)
 %
 % Author: Tamas Kis
-% Last Update: 2022-04-07
+% Last Update: 2022-05-02
 %
 % REFERENCES:
 %   [1] Kochenderfer and Wheeler, "Algorithms for Optimization" (pp. 69-71)
@@ -28,16 +28,16 @@
 %   f       - (1×1 function_handle) objective function, f(x) (f : ℝⁿ → ℝ)
 %   x0      - (n×1 double) initial guess for local minimizer
 %   opts    - (1×1 struct) (OPTIONAL) solver options
-%       • gradient      - (function_handle) gradient of the objective
-%                         function, g(x) = ∇f(x) (g : ℝⁿ → ℝⁿ)
-%       • k_max         - (1×1 double) maximimum number of iterations
-%                         (defaults to 200)
-%       • lambda        - (1×1 double) parameter for scaling 
-%                         Barzilai-Borwein step factor
-%       • return_all    - (1×1 logical) all intermediate estimates are 
-%                         returned if set to "true"
-%       • termination   - (char) termination condition ('abs' or 'rel')
-%       • TOL           - (1×1 double) tolerance (defaults to 1e-12)
+%       • gradient    - (function_handle) gradient of the objective 
+%                       function, g(x) = ∇f(x) (g : ℝⁿ → ℝⁿ)
+%       • k_max       - (1×1 double) maximimum number of iterations
+%                       (defaults to 200)
+%       • lambda      - (1×1 double) parameter for scaling Barzilai-Borwein
+%                       step factor
+%       • return_all  - (1×1 logical) all intermediate estimates are 
+%                       returned if set to "true"
+%       • termination - (char) termination condition ('abs' or 'rel')
+%       • TOL         - (1×1 double) tolerance (defaults to 10⁻¹⁰)
 %
 % -------
 % OUTPUT:
@@ -49,7 +49,7 @@
 %   f_all   - (1×k double) all intermediate estimates of local minimum
 %
 %==========================================================================
-function [x_min,f_min,k,x_all,f_all] = fminbb(f,x0,opts)
+function [x_min,f_min,k,x_all,f_all] = minimize_barzilai_borwein(f,x0,opts)
     
     % ----------------------------------
     % Sets (or defaults) solver options.
@@ -91,9 +91,9 @@ function [x_min,f_min,k,x_all,f_all] = fminbb(f,x0,opts)
         condition = opts.termination;
     end
 
-    % sets tolerance (defaults to 1e-12)
+    % sets tolerance (defaults to 10⁻¹⁰)
     if (nargin < 3) || isempty(opts) || ~isfield(opts,'TOL')
-        TOL = 1e-12;
+        TOL = 1e-10;
     else
         TOL = opts.TOL;
     end

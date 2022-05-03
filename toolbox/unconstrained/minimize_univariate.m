@@ -1,11 +1,11 @@
 %==========================================================================
 %
-% fminuni  Finds the local minimizer and minimum of a univariate 
-% objective function (unconstrained optimization).
+% minimize_univariate  Finds the local minimizer and minimum of a 
+% univariate objective function (unconstrained optimization).
 %
-%   x_min = fminuni(f,x0)
-%   x_min = fminuni(f,x0,opts)
-%   [x_min,f_min] = fminuni(__)
+%   x_min = minimize_univariate(f,x0)
+%   x_min = minimize_univariate(f,x0,opts)
+%   [x_min,f_min] = minimize_univariate(__)
 %
 % Author: Tamas Kis
 % Last Update: 2022-04-06
@@ -33,7 +33,7 @@
 %   f_min   - (1×1 double) local minimum of f(x)
 %
 %==========================================================================
-function [x_min,f_min] = fminuni(f,x0,opts)
+function [x_min,f_min] = minimize_univariate(f,x0,opts)
     
     % ----------------------------------
     % Sets (or defaults) solver options.
@@ -52,7 +52,7 @@ function [x_min,f_min] = fminuni(f,x0,opts)
     else
         n = opts.n;
     end
-
+    
     % determines if tolerance is input
     TOL_input = (nargin == 3) && ~isempty(opts) && isfield(opts,'TOL');
     
