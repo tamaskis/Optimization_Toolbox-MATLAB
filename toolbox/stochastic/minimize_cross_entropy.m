@@ -3,13 +3,13 @@
 % minimize_cross_entropy  Finds the local minimizer and minimum of an 
 % objective function using the cross entropy method.
 %
-%   x_min = minimize_cross_entropy(f,x0,sigma0)
-%   x_min = minimize_cross_entropy(f,x0,sigma0,opts)
+%   x_min = minimize_cross_entropy(f,x0)
+%   x_min = minimize_cross_entropy(f,x0,opts)
 %   [x_min,f_min] = minimize_cross_entropy(__)
 %   [x_min,f_min,x_all,f_all] = minimize_cross_entropy(__)
 %
 % Author: Tamas Kis
-% Last Update: 2022-05-01
+% Last Update: 2022-05-23
 %
 % REFERENCES:
 %   [1] Kochenderfer and Wheeler, "Algorithms for Optimization"
@@ -25,14 +25,17 @@
 %   sigma0  - (1×1 double) standard deviation of initial proposal
 %             distribution (same for all design variables)
 %   opts    - (1×1 struct) (OPTIONAL) solver options
-%       • k_max         - (1×1 double) maximimum number of iterations
-%                         (defaults to 200)
-%       • m             - (1×1 double) sample size
-%       • m_elite       - (1×1 double) number of elite samples
-%       • return_all    - (logical) all intermediate root estimates are
-%                         returned if set to "true"; otherwise, a faster 
-%                         algorithm is used to return only the converged 
-%                         local minimizer/minimum
+%       • k_max      - (1×1 double) maximimum number of iterations 
+%                      (defaults to 200)
+%       • m          - (1×1 double) sample size
+%       • m_elite    - (1×1 double) number of elite samples
+%       • return_all - (logical) all intermediate root estimates are
+%                      returned if set to "true"; otherwise, a faster 
+%                      algorithm is used to return only the converged local
+%                      minimizer/minimum
+%       • sigma0     - (1×1 double) standard deviation of initial proposal
+%                      distribution (same for all design variables)
+%                      (defaults to 10)
 %
 % -------
 % OUTPUT:
@@ -43,41 +46,47 @@
 %   f_all   - (1×k double) all estimates of local minimum of f(x)
 %
 %==========================================================================
-function [x_min,f_min,x_all,f_all] = minimize_cross_entropy(f,x0,sigma0,...
-    opts)
+function [x_min,f_min,x_all,f_all] = minimize_cross_entropy(f,x0,opts)
     
     % ----------------------------------
     % Sets (or defaults) solver options.
     % ----------------------------------
     
     % sets maximum number of iterations (defaults to 200)
-    if (nargin < 4) || isempty(opts) || ~isfield(opts,'k_max')
+    if (nargin < 3) || isempty(opts) || ~isfield(opts,'k_max')
         k_max = 200;
     else
         k_max = opts.k_max;
     end
     
     % determines sample size
-    if (nargin < 4) || isempty(opts) || ~isfield(opts,'m')
+    if (nargin < 3) || isempty(opts) || ~isfield(opts,'m')
         m = 100;
     else
         m = opts.m;
     end
     
     % determines number of elite samples
-    if (nargin < 4) || isempty(opts) || ~isfield(opts,'m_elite')
+    if (nargin < 3) || isempty(opts) || ~isfield(opts,'m_elite')
         m_elite = 10;
     else
         m_elite = opts.m_elite;
     end
     
     % determines if all intermediate estimates should be returned
-    if (nargin < 4) || isempty(opts) || ~isfield(opts,'return_all')
+    if (nargin < 3) || isempty(opts) || ~isfield(opts,'return_all')
         return_all = false;
     else
         return_all = opts.return_all;
     end
     
+    % sets proposal distribution standard deviation (defaults to 10)
+    if (nargin < 3) || isempty(opts) || ~isfield(opts,'sigma0')
+        sigma0 = 10;
+    else
+        sigma0 = opts.sigma0;
+    end
+
     % ---------------------
     % Optimization routine.
     % ---------------------
